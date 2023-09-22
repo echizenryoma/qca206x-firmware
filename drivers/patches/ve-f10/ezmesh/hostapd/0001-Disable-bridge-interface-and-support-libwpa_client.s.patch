@@ -1,0 +1,60 @@
+From ec3ff0641cd7e9ee4f5e17d5542295940cfb07e5 Mon Sep 17 00:00:00 2001
+From: Li Feng <quic_lifeng@quicinc.com>
+Date: Mon, 10 Jan 2022 14:32:12 +0800
+Subject: [PATCH] Disable bridge interface and support libwpa_client.so
+
+---
+ wpa_supplicant/Makefile  | 1 +
+ wpa_supplicant/defconfig | 2 ++
+ wpa_supplicant/events.c  | 5 +++--
+ 3 files changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/wpa_supplicant/Makefile b/wpa_supplicant/Makefile
+index 271f2aa..d96ad8b 100644
+--- a/wpa_supplicant/Makefile
++++ b/wpa_supplicant/Makefile
+@@ -1,3 +1,4 @@
++-include .config
+ BINALL=wpa_supplicant wpa_cli
+ 
+ ifndef CONFIG_NO_WPA_PASSPHRASE
+diff --git a/wpa_supplicant/defconfig b/wpa_supplicant/defconfig
+index 708a823..e3879b9 100644
+--- a/wpa_supplicant/defconfig
++++ b/wpa_supplicant/defconfig
+@@ -628,3 +628,5 @@ CONFIG_DPP=y
+ # design is still subject to change. As such, this should not yet be enabled in
+ # production use.
+ #CONFIG_PASN=y
++
++CONFIG_BUILD_WPA_CLIENT_SO=y
+diff --git a/wpa_supplicant/events.c b/wpa_supplicant/events.c
+index b511d1c..33b521b 100644
+--- a/wpa_supplicant/events.c
++++ b/wpa_supplicant/events.c
+@@ -346,7 +346,7 @@ void wpa_supplicant_mark_disassoc(struct wpa_supplicant *wpa_s)
+ #endif /* CONFIG_TESTING_OPTIONS */
+ 	wpa_s->ieee80211ac = 0;
+ 
+-	if (wpa_s->enabled_4addr_mode && wpa_drv_set_4addr_mode(wpa_s, 0) == 0)
++	if (wpa_s->enabled_4addr_mode /*&& wpa_drv_set_4addr_mode(wpa_s, 0) == 0*/)
+ 		wpa_s->enabled_4addr_mode = 0;
+ }
+ 
+@@ -2623,11 +2623,12 @@ static void multi_ap_set_4addr_mode(struct wpa_supplicant *wpa_s)
+ 		wpa_printf(MSG_INFO, "AP doesn't support backhaul BSS");
+ 		goto fail;
+ 	}
+-
++#if 0
+ 	if (wpa_drv_set_4addr_mode(wpa_s, 1) < 0) {
+ 		wpa_printf(MSG_ERROR, "Failed to set 4addr mode");
+ 		goto fail;
+ 	}
++#endif
+ 	wpa_s->enabled_4addr_mode = 1;
+ 	return;
+ 
+-- 
+2.7.4
+

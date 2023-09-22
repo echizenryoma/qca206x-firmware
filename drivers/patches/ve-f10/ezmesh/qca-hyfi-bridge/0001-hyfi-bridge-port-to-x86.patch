@@ -1,0 +1,115 @@
+From 66cb424a38d4e38466321f0b9b5d4b8e83bd5e26 Mon Sep 17 00:00:00 2001
+From: Li Feng <quic_lifeng@quicinc.com>
+Date: Mon, 10 Jan 2022 14:34:03 +0800
+Subject: [PATCH] hyfi-bridge: port to x86
+
+Change-Id: I207d13408b5d4c776b03351cbbed31acb2885b04
+Signed-off-by: Li Feng <quic_lifeng@quicinc.com>
+---
+ Makefile                       | 3 ++-
+ hyfi-multicast/mc_ecm.c        | 5 +++--
+ hyfi-multicast/mc_forward.c    | 4 ++--
+ hyfi-netfilter/hyfi_osdep.h    | 4 ++--
+ hyfi-netfilter/hyfi_seamless.c | 2 +-
+ 5 files changed, 10 insertions(+), 8 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 9d19ba4..21c92b5 100644
+--- a/Makefile
++++ b/Makefile
+@@ -25,6 +25,7 @@ INCLUDES := -I$(CURDIR) \
+     -I$(KERNELPATH)/include/linux \
+     -I$(KERNELPATH)/include/asm \
+     -I$(KERNELPATH)/net/bridge \
++    -I$(KERNELPATH)/include/net/bridge \
+     -I$(KBUILDPATH)/include/linux \
+     -I$(KBUILDPATH)/include/asm \
+     -I$(KBUILDPATH)/net/bridge \
+@@ -38,7 +39,7 @@ INCLUDES+= -I$(STAGING_DIR)/usr/include/emesh-sp
+ endif
+ 
+ export EXTRA_CFLAGS += $(INCLUDES)
+-
++ccflags-y+=$(INCLUDES)
+ # Module extra compilation flags
+ EXTRA_CFLAGS += -Werror -Wall -g $(QCACFLAGS)
+ 
+diff --git a/hyfi-multicast/mc_ecm.c b/hyfi-multicast/mc_ecm.c
+index a7225d2..293fb17 100644
+--- a/hyfi-multicast/mc_ecm.c
++++ b/hyfi-multicast/mc_ecm.c
+@@ -28,15 +28,16 @@
+ #include "mc_ecm.h"
+ 
+ static hyfi_bridge_ipv4_mc_update_callback_t __rcu hyfi_ipv4_mc_event_cb = NULL;
++#ifdef HYBRID_MC_MLD
+ static hyfi_bridge_ipv6_mc_update_callback_t __rcu hyfi_ipv6_mc_event_cb = NULL;
+-
++#endif
+ 
+ static int hyfi_bridge_if_source_filter(struct mc_mdb_entry *mdb, uint32_t ifindex, struct mc_ip *mc_source)
+ {
+ 
+     struct mc_port_group *pg;
+     struct hlist_node *pgh;
+-    int i;
++    int i = 0;
+ 
+     /*no bridge port joining*/
+     if (hlist_empty(&mdb->pslist))
+diff --git a/hyfi-multicast/mc_forward.c b/hyfi-multicast/mc_forward.c
+index 375274e..cd5a4c3 100644
+--- a/hyfi-multicast/mc_forward.c
++++ b/hyfi-multicast/mc_forward.c
+@@ -115,7 +115,7 @@ static void mc_encap_hook(struct net_bridge *br,
+         if (forward)
+             hyfi_br_forward(pdst, skb);
+         else
+-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 8, 0))
+             br_forward(pdst, skb, false, true);
+ #else
+             br_deliver(pdst, skb);
+@@ -207,7 +207,7 @@ static void mc_flood_hook(__be32 ifindex, struct sk_buff *skb, int forward)
+         hyfi_br_forward(br_port, skb);
+     }
+     else {
+-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 8, 0))
+         br_forward(br_port, skb, false, true);
+ #else
+         br_deliver(br_port, skb);
+diff --git a/hyfi-netfilter/hyfi_osdep.h b/hyfi-netfilter/hyfi_osdep.h
+index 48628a9..a30f2b7 100644
+--- a/hyfi-netfilter/hyfi_osdep.h
++++ b/hyfi-netfilter/hyfi_osdep.h
+@@ -80,11 +80,11 @@ static inline unsigned long hyfi_updated_time_get(const struct net_bridge_fdb_en
+ }
+ static inline void hyfi_br_forward(const struct net_bridge_port *to, struct sk_buff *skb)
+ {
+-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 8, 0))
+        // fasle: packet will be received locally after forwarding
+        // false: packet is locally originated
+         br_forward(to, skb, false, false);
+-#elif (LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 0))
++#elif (LINUX_VERSION_CODE < KERNEL_VERSION(4, 8, 0))
+ 	br_forward(to, skb, NULL);
+ #endif
+ }
+diff --git a/hyfi-netfilter/hyfi_seamless.c b/hyfi-netfilter/hyfi_seamless.c
+index e9364c7..e9197be 100644
+--- a/hyfi-netfilter/hyfi_seamless.c
++++ b/hyfi-netfilter/hyfi_seamless.c
+@@ -247,7 +247,7 @@ void hyfi_psw_send_pkt(struct hyfi_net_bridge *br, struct net_hatbl_entry *ha,
+ 
+ 	skb->dev = br->dev;
+ 
+-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 8, 0))
+ 	br_forward(ha->dst, skb, false, true);
+ #else
+ 	br_deliver(ha->dst, skb);
+-- 
+2.7.4
+

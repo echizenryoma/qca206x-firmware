@@ -1,0 +1,61 @@
+From f1ff3a7247e86d479bbd243b0155ae4857e473d1 Mon Sep 17 00:00:00 2001
+From: Zhonglin Zhang <zhonglin@codeaurora.org>
+Date: Tue, 30 Jun 2020 13:35:40 +0800
+Subject: [PATCH] Fix cross compilation issue
+
+SYSROOT is used to pass the correct libnl header
+---
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index 47a3bdd..5e917ac 100644
+--- a/Makefile
++++ b/Makefile
+@@ -85,7 +85,7 @@ LIBS += -ldl
+ endif
+ 
+ ifdef NL80211_SUPPORT
+-CFLAGS += -DNL80211_SUPPORT -I /usr/include/libnl3
++CFLAGS += -DNL80211_SUPPORT -I$(SYSROOT)/usr/include/libnl3
+ LIBS += -lnl-3 -lnl-genl-3
+ endif
+
+diff --git a/sta.c b/sta.c
+index 49cbc9a..6f2b213 100644
+--- a/sta.c
++++ b/sta.c
+@@ -1411,6 +1411,19 @@ static int add_ipv6_rule(struct sigma_dut *dut, const char *ifname)
+ 
+ 	return 0;
+ }
++#else
++static int start_dhcpcd_ipv6(struct sigma_dut *dut, const char *ifname)
++{
++    char buf[200];
++
++    snprintf(buf, sizeof(buf), "dhcpcd %s", ifname);
++    sigma_dut_print(dut, DUT_MSG_INFO, "Start dhcpcd: %s", buf);
++    if (system(buf) != 0) {
++        sigma_dut_print(dut, DUT_MSG_INFO, "Failed to start dhcpcd");
++        return -1;
++    }
++    return 0;
++}
+ #endif /* ANDROID */
+
+
+@@ -1499,6 +1512,9 @@ static enum sigma_cmd_result cmd_sta_set_ip_config(struct sigma_dut *dut,
+ 			 */
+ 			sleep(2);
+ 			add_ipv6_rule(dut, intf);
++#else
++                        if (start_dhcpcd_ipv6(dut, ifname) < 0)
++                                return -2;
+ #endif /* ANDROID */
+ 			/* Assume this happens by default */
+ 			return 1;
+
+-- 
+2.7.4
+

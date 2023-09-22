@@ -1,0 +1,96 @@
+From 2a8f3aee75483e28ff7a14c99e06756c68282c0d Mon Sep 17 00:00:00 2001
+From: Gnanaprakash Elumalai <gelumala@codeaurora.org>
+Date: Tue, 26 Oct 2021 12:38:29 +0530
+Subject: [PATCH] [qca-hyfi-bridge] Handle cleanup for multi bridge scenario
+
+1. Prevent multiple cache destroy for multiple bridge scenario
+2. Perform cache destroy operation after cache free for all bridges
+
+Change-Id: Iaf1208457d171ebfe49a4e5174b8cda59698c9c3
+Signed-off-by: Gnanaprakash Elumalai <gelumala@codeaurora.org>
+---
+ hyfi-netfilter/hyfi_bridge.c |  1 +
+ hyfi-netfilter/hyfi_hatbl.c  |  8 +++++---
+ hyfi-netfilter/hyfi_hdtbl.c  | 11 ++++++++---
+ hyfi-netfilter/hyfi_hdtbl.h  |  1 +
+ 4 files changed, 15 insertions(+), 6 deletions(-)
+
+diff --git a/hyfi-netfilter/hyfi_bridge.c b/hyfi-netfilter/hyfi_bridge.c
+index f9c182c..de93e5a 100644
+--- a/hyfi-netfilter/hyfi_bridge.c
++++ b/hyfi-netfilter/hyfi_bridge.c
+@@ -989,5 +989,6 @@ void __exit hyfi_bridge_fini(void)
+ 	}
+ 
+ 	hyfi_hatbl_free();
++	hyfi_hdtbl_free();
+ 
+ }
+diff --git a/hyfi-netfilter/hyfi_hatbl.c b/hyfi-netfilter/hyfi_hatbl.c
+index 0d0f398..ccb47b1 100644
+--- a/hyfi-netfilter/hyfi_hatbl.c
++++ b/hyfi-netfilter/hyfi_hatbl.c
+@@ -839,7 +839,11 @@ void hyfi_hatbl_mark_decelerated(struct net_hatbl_entry *ha)
+ 
+ void hyfi_hatbl_free(void)
+ {
+-	kmem_cache_destroy(hyfi_hatbl_cache);
++	if (hyfi_hatbl_cache) {
++		kmem_cache_destroy(hyfi_hatbl_cache);
++		hyfi_hatbl_cache = NULL;
++	}
++
+ }
+ 
+ void hyfi_hatbl_fini(struct hyfi_net_bridge *br)
+@@ -866,8 +870,6 @@ void hyfi_hatbl_fini(struct hyfi_net_bridge *br)
+ 	}
+ 
+ 	spin_unlock_bh(&br->hash_ha_lock);
+-
+-	kmem_cache_destroy(hyfi_hatbl_cache);
+ }
+ 
+ unsigned long hyfi_hatbl_calculate_elapsed_time(unsigned long time_now,
+diff --git a/hyfi-netfilter/hyfi_hdtbl.c b/hyfi-netfilter/hyfi_hdtbl.c
+index 195114c..831bf2b 100644
+--- a/hyfi-netfilter/hyfi_hdtbl.c
++++ b/hyfi-netfilter/hyfi_hdtbl.c
+@@ -405,6 +405,14 @@ int __init hyfi_hdtbl_init(void)
+ 	return 0;
+ }
+ 
++void hyfi_hdtbl_free(void)
++{
++	if (hyfi_hdtbl_cache) {
++		kmem_cache_destroy(hyfi_hdtbl_cache);
++		hyfi_hdtbl_cache = NULL;
++	}
++}
++
+ void hyfi_hdtbl_fini(struct hyfi_net_bridge *br)
+ {
+ 	u_int32_t i;
+@@ -427,7 +435,4 @@ void hyfi_hdtbl_fini(struct hyfi_net_bridge *br)
+ 	}
+ 
+ 	spin_unlock_bh(&br->hash_hd_lock);
+-
+-	/* Destroy the HD-Table cache */
+-	kmem_cache_destroy(hyfi_hdtbl_cache);
+ }
+diff --git a/hyfi-netfilter/hyfi_hdtbl.h b/hyfi-netfilter/hyfi_hdtbl.h
+index 97e55e9..fc77015 100644
+--- a/hyfi-netfilter/hyfi_hdtbl.h
++++ b/hyfi-netfilter/hyfi_hdtbl.h
+@@ -77,6 +77,7 @@ static inline struct net_hdtbl_entry* __hyfi_hdtbl_get(
+ }
+ 
+ extern int hyfi_hdtbl_init(void);
++extern void hyfi_hdtbl_free(void);
+ extern void hyfi_hdtbl_fini(struct hyfi_net_bridge *br);
+ extern void hyfi_hdtbl_flush(struct hyfi_net_bridge *br);
+ extern void hyfi_hdtbl_cleanup(unsigned long arg);
+-- 
+2.7.4
+

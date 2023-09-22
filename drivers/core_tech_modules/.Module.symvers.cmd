@@ -1,0 +1,1 @@
+cmd_/home/turbo/work/drivers/QCA206X/qca206X_v2.0611_K04040622/drivers/core_tech_modules/Module.symvers := sed 's/ko$$/o/' /home/turbo/work/drivers/QCA206X/qca206X_v2.0611_K04040622/drivers/core_tech_modules/modules.order | scripts/mod/modpost -m -a   -o /home/turbo/work/drivers/QCA206X/qca206X_v2.0611_K04040622/drivers/core_tech_modules/Module.symvers -e -i Module.symvers   -T -

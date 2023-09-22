@@ -1,0 +1,92 @@
+From e2f5af590b341ae5c56b5a6dc507ca4ab4760230 Mon Sep 17 00:00:00 2001
+From: Li Feng <quic_lifeng@quicinc.com>
+Date: Mon, 10 Jan 2022 14:32:53 +0800
+Subject: [PATCH] netifd: fixing compilation issue on x86
+
+---
+ CMakeLists.txt | 8 ++++----
+ bridge.c       | 2 +-
+ interface.c    | 2 +-
+ proto-shell.c  | 6 +++---
+ 4 files changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index bcb5133..039fa88 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -7,11 +7,11 @@ IF(NOT ${CMAKE_VERSION} LESS 3.0)
+   check_c_compiler_flag(-Wimplicit-fallthrough HAS_IMPLICIT_FALLTHROUGH)
+ ENDIF()
+ 
+-ADD_DEFINITIONS(-Os -Wall -Werror --std=gnu99 -Wmissing-declarations -Wno-unknown-warning-option -Wno-format-truncation)
++ADD_DEFINITIONS(-Os -Wall -Werror --std=gnu99 -Wmissing-declarations -Wno-format-truncation)
+ 
+-IF(HAS_IMPLICIT_FALLTHROUGH)
+-  ADD_DEFINITIONS(-Wimplicit-fallthrough)
+-ENDIF()
++#IF(HAS_IMPLICIT_FALLTHROUGH)
++#  ADD_DEFINITIONS(-Wimplicit-fallthrough)
++#ENDIF()
+ 
+ SET(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
+ 
+diff --git a/bridge.c b/bridge.c
+index 7e61b9d..2d9780c 100644
+--- a/bridge.c
++++ b/bridge.c
+@@ -571,7 +571,7 @@ bridge_member_cb(struct device_user *dep, enum device_event ev)
+ 
+ 		if (bst->n_present == 1)
+ 			device_set_present(&bst->dev, true);
+-		fallthrough;
++		//fallthrough;
+ 	case DEV_EVENT_AUTH_UP:
+ 		if (!bst->dev.active)
+ 			break;
+diff --git a/interface.c b/interface.c
+index b3bb601..f76e761 100644
+--- a/interface.c
++++ b/interface.c
+@@ -262,7 +262,7 @@ interface_event(struct interface *iface, enum interface_event ev)
+ 	case IFEV_UP:
+ 		interface_error_flush(iface);
+ 		adev = iface->l3_dev.dev;
+-		fallthrough;
++		//fallthrough;
+ 	case IFEV_DOWN:
+ 	case IFEV_UP_FAILED:
+ 		alias_notify_device(iface->name, adev);
+diff --git a/proto-shell.c b/proto-shell.c
+index e20d539..0d7482a 100644
+--- a/proto-shell.c
++++ b/proto-shell.c
+@@ -208,7 +208,7 @@ proto_shell_handler(struct interface_proto_state *proto,
+ 				return 0;
+ 			}
+ 		/* if no script task is running */
+-		fallthrough;
++		//fallthrough;
+ 		case S_IDLE:
+ 			action = "teardown";
+ 			state->renew_pending = false;
+@@ -292,7 +292,7 @@ proto_shell_task_finish(struct proto_shell_state *state,
+ 	case S_IDLE:
+ 		if (task == &state->proto_task)
+ 			state->proto.proto_event(&state->proto, IFPEV_LINK_LOST);
+-		fallthrough;
++		//fallthrough;
+ 	case S_SETUP:
+ 		if (task == &state->proto_task)
+ 			proto_shell_handler(&state->proto, PROTO_CMD_TEARDOWN,
+@@ -764,7 +764,7 @@ proto_shell_setup_failed(struct proto_shell_state *state)
+ 	switch (state->sm) {
+ 	case S_IDLE:
+ 		state->proto.proto_event(&state->proto, IFPEV_LINK_LOST);
+-		fallthrough;
++		//fallthrough;
+ 	case S_SETUP:
+ 		proto_shell_handler(&state->proto, PROTO_CMD_TEARDOWN, false);
+ 		break;
+-- 
+2.7.4
+

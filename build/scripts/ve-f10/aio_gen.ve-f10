@@ -1,0 +1,90 @@
+#!/bin/bash
+# Add hpe-f20 specific patches
+
+# subverion
+BRD_TYPE_VER=ve-f10
+
+GIT_SERVER_CLO=https://git.codelinaro.org/clo
+GIT_SERVER=git://git.quicinc.com
+GIT_REVIEW_SERVER=ssh://review-android.quicinc.com:29418
+
+#
+# For each board type,
+# determine which components should be downloaded.
+# The settings here will overwrite the default in aio_gen_bit.sh.
+#
+# ONLY add/enable those components need download.
+#
+# 1. patch files
+DOWNLOAD_PATCH=y
+
+# 2. kernel
+DOWNLOAD_KERNEL_BACKPORT_3_12=n
+
+# 3. WLAN/BT host drivers
+DOWNLOAD_DRIVER_WLAN_HOST=n
+
+# 4. APPs
+DOWNLOAD_APP_WLAN_WPA_SUPPLICANT_8=y
+DOWNLOAD_APP_WLAN_LIBNL_3_2_25=n
+
+DOWNLOAD_SIGMA_DUT=y
+SIGMA_DUT_GIT_PATH=${GIT_SERVER_CLO}/la/platform/vendor/qcom-opensource/wlan/utils/sigma-dut.git
+SIGMA_DUT_BRANCH="github-qca/master"
+CUTOFF_ID_SIGMA_DUT=31182011fe8595458cf29c7fb6ef1a605691d59f
+
+OLD_DIR=`pwd`
+
+# 5. Core tech modules
+DOWNLOAD_CORE_TECH_MODULES=y
+CORE_TECH_GIT_PATH_CLO=${GIT_SERVER_CLO}/external-wlan/wlan-cnss-core.git
+CORE_TECH_GIT_PATH=git://git.quicinc.com/platform/vendor/qcom-opensource/wlan-cnss-core
+CORE_TECH_BRANCH_CLO=caf_migration/master
+CORE_TECH_BRANCH=master
+CUTOFF_ID_CORE_TECH_CLO=013c5d823629d333680d164d18345d1a404a33cd
+CUTOFF_ID_CORE_TECH=18bd849c98047c54d62562f5087a57f5dd63527d
+declare -a CORE_TECH_GERRITS_LIST=(
+)
+
+# 6. CLD3.2
+DOWNLOAD_DRIVER_WLAN_HOST_CLD3_2=y
+CLD3_GIT_PATH_CLO=${GIT_SERVER_CLO}/external-wlan/qcacld-3.0.git
+CMN_GIT_PATH_CLO=${GIT_SERVER_CLO}/external-wlan/qca-wifi-host-cmn.git
+FWAPI_GIT_PATH_CLO=${GIT_SERVER_CLO}/external-wlan/fw-api.git
+CLD3_BRANCH_CLO=caf_migration/wlan-cld3.driver.lnx.2.0.7.c1
+CLD3_BRANCH=wlan-cld3.driver.lnx.2.0.7.c1
+CMN_BRANCH_CLO=caf_migration/wlan-cmn.driver.lnx.2.0.7.c1
+CMN_BRANCH=wlan-cmn.driver.lnx.2.0.7.c1
+FWAPI_BRANCH_CLO=caf_migration/wlan-api.lnx.1.0
+FWAPI_BRANCH=wlan-api.lnx.1.0
+CUTOFF_ID_CLD3_CLO=aa723c4ff62032d2a370d1dde4d5dd5534bb7a9c
+CUTOFF_ID_CLD3=1f949d96d9a92ef262599c4a1598bf7c81c8bacc
+CUTOFF_ID_CMN_CLO=26a4e2402123f8576d2141f76f939130808b3501
+CUTOFF_ID_CMN=84b37a092dc75322a0c88b4985d85847e4d87c92
+CUTOFF_ID_FWAPI_CLO=2d65e9850335d5f12aa440241ae16d95f247c3c2
+CUTOFF_ID_FWAPI=bdd2ca6d5ba4a8e82f9bbd5e0184759e1ef86f5c
+
+declare -a CLD3_GERRITS_LIST=(
+)
+
+declare -a CMN_GERRITS_LIST=(
+)
+
+declare -a FWAPI_GERRITS_LIST=(
+)
+
+##echo "========================================================"
+##echo " Downloading patches ..."
+##echo "========================================================"
+PATCH_PATH=
+BOARD_TYPE_PREFIX=
+declare -a custom_aio_patch_arr=(
+)
+BOARD_TYPE_AIO_PATCH_CLO=
+
+DOWNLOAD_AIO_PATCH_PROJECT=y
+AIO_PATCH_GIT_PATH=${GIT_SERVER_CLO}/sba-patches/wlan_patches.git
+AIO_PATCH_BRANCH=caf_migration/master
+CUTOFF_ID_AIO_PATCH=597e07e6b1616e7e25021d5c57cd93e6599374b4
+
+cd ${OLD_DIR}

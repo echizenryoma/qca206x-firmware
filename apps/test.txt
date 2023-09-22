@@ -1,0 +1,7 @@
+2.4g
+ Iperf -c “peer wireless ip” -i 1 -w 4M -t 60
+ Iperf -s -i 1 -w 4M
+ 5g
+ iperf -c “peer wireless IP” –i 1 -w 4M -t 60 -P 8
+ iperf -s –i 1 -w 4M -P 4
+

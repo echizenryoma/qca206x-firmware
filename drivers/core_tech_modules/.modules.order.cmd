@@ -1,0 +1,1 @@
+cmd_/home/turbo/work/drivers/QCA206X/qca206X_v2.0611_K04040622/drivers/core_tech_modules/modules.order := {   echo /home/turbo/work/drivers/QCA206X/qca206X_v2.0611_K04040622/drivers/core_tech_modules/wlan_cnss_core_pcie.ko; :; } | awk '!x[$$0]++' - > /home/turbo/work/drivers/QCA206X/qca206X_v2.0611_K04040622/drivers/core_tech_modules/modules.order
